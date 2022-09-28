@@ -14,5 +14,6 @@ resource "aws_iam_policy" "aws_efs_csi_driver" {
   name        = "${var.addon_context.eks_cluster_id}-efs-csi-policy"
   description = "IAM Policy for AWS EFS CSI Driver"
   policy      = data.aws_iam_policy_document.aws_efs_csi_driver.json
+  path        = try(var.addon_context.irsa_iam_role_path, null)
   tags        = var.addon_context.tags
 }

@@ -1,7 +1,8 @@
 locals {
-  name                 = "aws-efs-csi-driver"
-  service_account_name = "efs-csi-sa"
-  namespace            = "kube-system"
+  name                   = "aws-efs-csi-driver"
+  namespace              = "kube-system"
+  service_account        = try(var.helm_config.service_account, "efs-csi-sa")
+  create_service_account = try(var.helm_config.create_service_account, true)
 
   default_helm_config = {
     name        = local.name
@@ -21,7 +22,7 @@ locals {
   set_values = [
     {
       name  = "controller.serviceAccount.name"
-      value = local.service_account_name
+      value = local.service_account
     },
     {
       name  = "controller.serviceAccount.create"
@@ -29,7 +30,7 @@ locals {
     },
     {
       name  = "node.serviceAccount.name"
-      value = local.service_account_name
+      value = local.service_account
     },
     {
       name  = "node.serviceAccount.create"
@@ -39,15 +40,15 @@ locals {
 
   irsa_config = {
     kubernetes_namespace              = local.helm_config["namespace"]
-    kubernetes_service_account        = local.service_account_name
-    create_kubernetes_namespace       = try(var.helm_config.create_namespace, false)
-    create_kubernetes_service_account = true
+    kubernetes_service_account        = local.service_account
+    create_kubernetes_namespace       = false
+    create_kubernetes_service_account = local.create_service_account
     irsa_iam_policies                 = concat([aws_iam_policy.aws_efs_csi_driver.arn], var.irsa_policies)
     tags                              = var.addon_context.tags
   }
 
   argocd_gitops_config = {
     enable             = true
-    serviceAccountName = local.service_account_name
+    serviceAccountName = local.service_account
   }
 }
