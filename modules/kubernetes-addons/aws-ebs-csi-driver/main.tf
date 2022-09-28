@@ -1,7 +1,9 @@
 locals {
-  create_irsa = try(var.addon_config.service_account_role_arn == "", true)
-  name        = try(var.helm_config.name, "aws-ebs-csi-driver")
-  namespace   = try(var.helm_config.namespace, "kube-system")
+  create_irsa            = try(var.addon_config.service_account_role_arn == "", true)
+  name                   = try(var.helm_config.name, "aws-ebs-csi-driver")
+  namespace              = try(var.helm_config.namespace, "kube-system")
+  service_account        = try(var.helm_config.service_account, "ebs-csi-controller-sa")
+  create_service_account = try(var.helm_config.create_service_account, true)
 }
 
 resource "aws_eks_addon" "aws_ebs_csi_driver" {
@@ -76,14 +78,18 @@ module "helm_addon" {
     {
       name  = "controller.serviceAccount.create"
       value = "false"
+    },
+    {
+      name  = "controller.serviceAccount.name"
+      value = local.service_account
     }
   ]
 
   irsa_config = {
     create_kubernetes_namespace       = try(var.helm_config.create_namespace, false)
     kubernetes_namespace              = local.namespace
-    create_kubernetes_service_account = true
-    kubernetes_service_account        = "ebs-csi-controller-sa"
+    create_kubernetes_service_account = local.create_service_account
+    kubernetes_service_account        = local.service_account
     irsa_iam_policies                 = concat([aws_iam_policy.aws_ebs_csi_driver[0].arn], try(var.helm_config.additional_iam_policies, []))
   }
 
