@@ -55,6 +55,8 @@ module "helm_addon" {
   source = "../helm-addon"
   count  = var.enable_self_managed_aws_ebs_csi_driver && !var.enable_amazon_eks_aws_ebs_csi_driver ? 1 : 0
 
+  manage_via_gitops = var.manage_via_gitops
+
   helm_config = merge({
     name        = local.name
     description = "The Amazon Elastic Block Store Container Storage Interface (CSI) Driver provides a CSI interface used by Container Orchestrators to manage the lifecycle of Amazon EBS volumes."
